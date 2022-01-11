@@ -3,6 +3,8 @@
 #include "sensor_msgs/LaserScan.h"
 #include <termios.h>
 
+#define LENGTH 100
+
 ros::Publisher publisher;
 
 //define variables for vel direction
@@ -12,8 +14,74 @@ int lin, ang = 0;
 double speed = 0.5;
 double turn_speed = 1;
 
+//define variable for wall distance trashold
+double wall_th = 2;
+
 //define variable for Twist
 geometry_msgs::Twist vel;
+
+/**  Returns the minumim value of a given array  */
+double min(double a[])
+{
+    double min = 100;
+    for (int i = 0; i < LENGTH; i++)
+    {
+        if (a[i] < min)
+            min = a[i];
+    }
+    return min;
+}
+
+/** @brief Check all the visible walls.
+ *
+ * This function checks all the walls that the robot can see. It uses the robot scanner, and it checks
+ * all the blocks that are in front of the robot, at his left and at his right.
+ * If the robot is close to a wall, it makes him stop, otherwise it let him go.
+ *
+ * @param msg The message published into /scan topic
+ *
+ */
+void checkWalls(const sensor_msgs::LaserScan::ConstPtr &msg)
+{
+
+    double left[LENGTH];
+    double front[LENGTH];
+    double right[LENGTH];
+
+    //the last LENGTH element of the arrays refers to the walls on the left
+    for (int i = 719 - LENGTH; i <= 719; i++)
+    {
+        left[i - (719 - LENGTH)] = msg->ranges[i];
+    }
+
+    //the mid-LENGTH element of the arrays refers to the walls in front of the robot
+    for (int i = 360 - ((LENGTH / 2) + LENGTH % 2); i < 360 + ((LENGTH / 2) + LENGTH % 2); i++)
+    {
+        front[i - (360 - ((LENGTH / 2) + LENGTH % 2))] = msg->ranges[i];
+    }
+
+    //the first LENGTH element of the arrays refers to the walls on the right
+    for (int i = 0; i < LENGTH; i++)
+    {
+        right[i] = msg->ranges[i];
+    }
+
+    //if the nearest wall in front of the robot is too close, the robot can only turn
+    if (min(front) < wall_th && lin>0)
+    {
+        lin=0;
+    }
+    //if the nearest wall on the left or on the right is too close, the robot can only go straight
+    if (((min(left) < wall_th)&&ang>0) || ((min(right) < wall_th)&&ang<0))
+    {
+       ang=0; 
+    }
+
+    printf("%f\n",min(left));
+    printf("%f\n",min(front));
+    printf("%f\n",min(right));
+
+}
 
 // For non-blocking keyboard inputs, taken from teleop_twist_keyboard_cpp
 // at https://github.com/methylDragon/teleop_twist_keyboard_cpp/blob/master/src/teleop_twist_keyboard.cpp
@@ -159,11 +227,14 @@ press CTRL-C to quit
 )";
     std::cout << "\ncurrently:\tspeed " << speed << "\tturn " << turn_speed << "\n\n";
 
-
     //wait for user input
     input_char = getch();
 
     interpretInput(input_char);
+    
+    system("clear");
+    
+    checkWalls(msg);
 
     //prepare new speed
     vel.angular.z = turn_speed * ang;
@@ -172,13 +243,12 @@ press CTRL-C to quit
     //publish the new speed to the relative topic
     publisher.publish(vel);
 
-    system("clear");
 }
 
 int main(int argc, char **argv)
 {
     system("clear");
-    ros::init(argc, argv, "driveWithKeyboard");
+    ros::init(argc, argv, "driveWithKeyboardAssisted");
     ros::NodeHandle node_handle;
 
     //subribes to /scan topic
