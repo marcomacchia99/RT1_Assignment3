@@ -3,22 +3,37 @@
 #include "sensor_msgs/LaserScan.h"
 #include <termios.h>
 
-#define LENGTH 100
+#define LENGTH 140
+
+#define RED "\033[1;31m"
+#define BLUE "\033[1;34m"
+#define NC "\033[0m"
+#define BOLD "\033[1m"
 
 ros::Publisher publisher;
 
-//define variables for vel direction
+//variables for vel direction
 int lin, ang = 0;
 
-//define variables for vel speed
+//variables for vel speed
 double speed = 0.5;
 double turn_speed = 1;
 
-//define variable for wall distance trashold
-double wall_th = 2;
+//variable for wall distance trashold
+double wall_th = 1;
 
 //define variable for Twist
 geometry_msgs::Twist vel;
+
+void publishVel()
+{
+    //prepare new speed
+    vel.angular.z = turn_speed * ang;
+    vel.linear.x = speed * lin;
+
+    //publish the new speed to the relative topic
+    publisher.publish(vel);
+}
 
 /**  Returns the minumim value of a given array  */
 double min(double a[])
@@ -66,21 +81,24 @@ void checkWalls(const sensor_msgs::LaserScan::ConstPtr &msg)
         right[i] = msg->ranges[i];
     }
 
+    //warn user
+    if ((min(front) < wall_th && lin > 0) || ((min(left) < wall_th) && ang > 0) || ((min(right) < wall_th) && ang < 0))
+        std::cout << RED << "Wall detected!\n"
+                  << NC;
+
     //if the nearest wall in front of the robot is too close, the robot can only turn
-    if (min(front) < wall_th && lin>0)
+    if (min(front) < wall_th && lin > 0)
     {
-        lin=0;
+        lin = 0;
     }
     //if the nearest wall on the left or on the right is too close, the robot can only go straight
-    if (((min(left) < wall_th)&&ang>0) || ((min(right) < wall_th)&&ang<0))
+    if (((min(left) < wall_th) && ang > 0) || ((min(right) < wall_th) && ang < 0))
     {
-       ang=0; 
+        ang = 0;
     }
 
-    printf("%f\n",min(left));
-    printf("%f\n",min(front));
-    printf("%f\n",min(right));
-
+    //publish new speed
+    publishVel();
 }
 
 // For non-blocking keyboard inputs, taken from teleop_twist_keyboard_cpp
@@ -115,6 +133,7 @@ int getch(void)
 
 void interpretInput(char inputChar)
 {
+
     //set linear and angular direction according to user input
     switch (inputChar)
     {
@@ -199,15 +218,15 @@ void interpretInput(char inputChar)
     }
 }
 
-void getCommand(const sensor_msgs::LaserScan::ConstPtr &msg)
+void getCommand()
 {
     char input_char;
 
     //display instructions
-    std::cout << R"(Here you can drive the robot using your keyboard!
+    std::cout << BOLD << "Drive the robot using your keyboard\n\n"
+              << NC;
 
-Use the commands below as a joystick
----------------------------
+    std::cout << R"(Use the commands below as a joystick
 
    u    i    o
    j    k    l
@@ -225,24 +244,18 @@ d   : reset only angular speed
 
 press CTRL-C to quit
 )";
-    std::cout << "\ncurrently:\tspeed " << speed << "\tturn " << turn_speed << "\n\n";
+    std::cout << BLUE << "\ncurrently:\tspeed " << speed << "\tturn " << turn_speed << "\n"
+              << NC;
 
     //wait for user input
     input_char = getch();
 
     interpretInput(input_char);
-    
+
+    //publish new speed
+    publishVel();
+
     system("clear");
-    
-    checkWalls(msg);
-
-    //prepare new speed
-    vel.angular.z = turn_speed * ang;
-    vel.linear.x = speed * lin;
-
-    //publish the new speed to the relative topic
-    publisher.publish(vel);
-
 }
 
 int main(int argc, char **argv)
@@ -252,12 +265,16 @@ int main(int argc, char **argv)
     ros::NodeHandle node_handle;
 
     //subribes to /scan topic
-    ros::Subscriber subscriber = node_handle.subscribe("/scan", 500, getCommand);
+    ros::Subscriber subscriber = node_handle.subscribe("/scan", 500, checkWalls);
 
     //this service will publish updated into /cmd_vel topic
     publisher = node_handle.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
 
-    ros::spin();
+    ros::AsyncSpinner spinner(4);
+    spinner.start();
+    while (true)
+        getCommand();
+    spinner.stop();
 
     return 0;
 }

@@ -3,6 +3,10 @@
 #include "sensor_msgs/LaserScan.h"
 #include <termios.h>
 
+#define BLUE "\033[1;34m"
+#define NC "\033[0m"
+#define BOLD "\033[1m"
+
 ros::Publisher publisher;
 
 //define variables for vel direction
@@ -131,15 +135,15 @@ void interpretInput(char inputChar)
     }
 }
 
-void getCommand(const sensor_msgs::LaserScan::ConstPtr &msg)
+void getCommand()
 {
     char input_char;
 
     //display instructions
-    std::cout << R"(Here you can drive the robot using your keyboard!
+    std::cout << BOLD << "Drive the robot using your keyboard\n\n"
+              << NC;
 
-Use the commands below as a joystick
----------------------------
+    std::cout << R"(Use the commands below as a joystick
 
    u    i    o
    j    k    l
@@ -157,8 +161,8 @@ d   : reset only angular speed
 
 press CTRL-C to quit
 )";
-    std::cout << "\ncurrently:\tspeed " << speed << "\tturn " << turn_speed << "\n\n";
-
+    std::cout << BLUE << "\ncurrently:\tspeed " << speed << "\tturn " << turn_speed << "\n"
+              << NC;
 
     //wait for user input
     input_char = getch();
@@ -181,13 +185,14 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "driveWithKeyboard");
     ros::NodeHandle node_handle;
 
-    //subribes to /scan topic
-    ros::Subscriber subscriber = node_handle.subscribe("/scan", 500, getCommand);
-
     //this service will publish updated into /cmd_vel topic
     publisher = node_handle.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
 
-    ros::spin();
+    while (true)
+    {
+        getCommand();
+    }
+
 
     return 0;
 }

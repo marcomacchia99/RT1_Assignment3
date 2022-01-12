@@ -140,6 +140,7 @@ include_directories(
 add_executable(driveWithKeyboard src/driveWithKeyboard.cpp)
 add_executable(driveWithKeyboardAssisted src/driveWithKeyboardAssisted.cpp)
 add_executable(reachPoint src/reachPoint.cpp)
+add_executable(mainController src/mainController.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -152,6 +153,7 @@ add_executable(reachPoint src/reachPoint.cpp)
 add_dependencies(driveWithKeyboard ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(driveWithKeyboardAssisted ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(reachPoint ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(mainController ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 ## Specify libraries to link a library or executable target against
@@ -162,6 +164,9 @@ target_link_libraries(driveWithKeyboardAssisted
   ${catkin_LIBRARIES}
 )
 target_link_libraries(reachPoint
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(mainController
   ${catkin_LIBRARIES}
 )
 
