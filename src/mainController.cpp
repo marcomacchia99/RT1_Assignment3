@@ -47,7 +47,6 @@ int main(int argc, char **argv)
 {
 
     ros::init(argc, argv, "mainController");
-    ros::NodeHandle node_handle;
 
     while (true)
     {

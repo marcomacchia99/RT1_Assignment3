@@ -13,7 +13,9 @@
 #define NC "\033[0m"
 #define BOLD "\033[1m"
 
-ros::Publisher publisher;
+ros::Publisher pub_goal;
+ros::Publisher pub_cancel;
+
 ros::Subscriber subscriber;
 
 //variables for goal coordinates
@@ -22,41 +24,129 @@ float x, y;
 //variable for goal id
 int id;
 
+//flag used to detect the user input during goal navigation
+int flag_goal_in_progress;
+
 //ariable for goal
 move_base_msgs::MoveBaseActionGoal goal;
 
 void getCoordinates();
 void feedbackHandler(const actionlib_msgs::GoalStatusArray::ConstPtr &msg);
+void detectInput();
+
+// For non-blocking keyboard inputs, taken from teleop_twist_keyboard.cpp
+// at https://github.com/methylDragon/teleop_twist_keyboard_cpp/blob/master/src/teleop_twist_keyboard.cpp
+int getch(void)
+{
+    int ch;
+    struct termios oldt;
+    struct termios newt;
+
+    // Store old settings, and copy to new settings
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+
+    // Make required changes and apply the settings
+    newt.c_lflag &= ~(ICANON | ECHO);
+    newt.c_iflag |= IGNBRK;
+    newt.c_iflag &= ~(INLCR | ICRNL | IXON | IXOFF);
+    newt.c_lflag &= ~(ICANON | ECHO | ECHOK | ECHOE | ECHONL | ISIG | IEXTEN);
+    newt.c_cc[VMIN] = 1;
+    newt.c_cc[VTIME] = 0;
+    tcsetattr(fileno(stdin), TCSANOW, &newt);
+
+    // Get the current character
+    ch = getchar();
+
+    // Reapply old settings
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+
+    return ch;
+}
+
+void cancelGoal(int must_continue)
+{
+    //build cancel message with goal id
+    actionlib_msgs::GoalID msg_cancel;
+    msg_cancel.id = std::to_string(id);
+    pub_cancel.publish(msg_cancel);
+
+    subscriber.shutdown();
+
+    flag_goal_in_progress =0;
+
+    if (!must_continue)
+        return;
+
+    system("clear");
+
+    std::cout << BOLD << "Robot automatic navigation \n\n"
+              << NC;
+    std::cout << RED << "Goal is cancelled. \n\n"
+              << NC;
+
+    std::cout << "\nWould you like to set another goal? (y/n)\n";
+    while (true)
+        detectInput();
+}
+
+void detectInput()
+{
+    //catch an user input
+    char input_char = getch();
+    if (input_char == 'q' || input_char == 'Q')
+    {
+        cancelGoal(1);
+    }
+    else if (input_char == '\x03') //CTRL-C
+    {
+        cancelGoal(0);
+        system("clear");
+        ros::shutdown();
+        exit(0);
+    }
+    else if ((input_char == 'y' || input_char == 'Y' || input_char == 'n' || input_char == 'N') && !flag_goal_in_progress)
+    {
+        if (input_char == 'y' || input_char == 'Y')
+            getCoordinates();
+        else
+            exit(1);
+    }
+}
 
 void getCoordinates()
 {
     system("clear");
-    std::cout << BOLD << "Robot automatic navigation \n\n"<<NC;
+    std::cout << BOLD << "Robot automatic navigation \n\n"
+              << NC;
 
     //wait until two floats are inserted
-    std::cout << "Insert "<<BOLD<<"x"<<NC<<" coordinate: ";
+    std::cout << "Insert " << BOLD << "x" << NC << " coordinate: ";
     std::cin >> x;
     while (!std::cin.good())
     {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         system("clear");
-        std::cout << BOLD << "Robot automatic navigation \n\n"<<NC;
-        std::cout << "Insert "<<BOLD<<"x"<<NC<<" coordinate: ";
+        std::cout << BOLD << "Robot automatic navigation \n\n"
+                  << NC;
+        std::cout << "Insert " << BOLD << "x" << NC << " coordinate: ";
         std::cin >> x;
     }
     system("clear");
-    std::cout << BOLD << "Robot automatic navigation \n\n"<<NC;
+    std::cout << BOLD << "Robot automatic navigation \n\n"
+              << NC;
 
-    std::cout << "Insert "<<BOLD<<"y"<<NC<<" coordinate: ";
+    std::cout << "Insert " << BOLD << "y" << NC << " coordinate: ";
     std::cin >> y;
     while (!std::cin.good())
     {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         system("clear");
-        std::cout << BOLD << "Robot automatic navigation \n\n"<<NC;
-        std::cout << "Insert "<<BOLD<<"y"<<NC<<" coordinate: ";
+        std::cout << BOLD << "Robot automatic navigation \n\n"
+                  << NC;
+        std::cout << "Insert " << BOLD << "y" << NC << " coordinate: ";
         std::cin >> y;
     }
     id = rand();
@@ -66,16 +156,29 @@ void getCoordinates()
     goal.goal.target_pose.header.frame_id = "map";
     goal.goal_id.id = std::to_string(id);
 
-    publisher.publish(goal);
+    pub_goal.publish(goal);
+
+    flag_goal_in_progress = 1;
 
     system("clear");
 
-    std::cout << BOLD << "Robot automatic navigation \n"<<NC;
+    std::cout << BOLD << "Robot automatic navigation \n"
+              << NC;
 
-    std::cout << BLUE << "\nThe goal has been set to\tx: " << x << "\ty: " << y << NC << "\n\n";
+    std::cout << BLUE << "\nThe goal has been correctly set to\tx: " << x << "\ty: " << y << NC << "\n\n";
+
+    std::cout << "Press q to cancel the goal, or press CTRL-C to quit\n\n";
 
     ros::NodeHandle node_handle;
     subscriber = node_handle.subscribe("/move_base/status", 500, feedbackHandler);
+
+    ros::AsyncSpinner spinner(4);
+
+    spinner.start();
+    while (true)
+        detectInput();
+
+    spinner.stop();
 }
 
 void feedbackHandler(const actionlib_msgs::GoalStatusArray::ConstPtr &msg)
@@ -95,6 +198,14 @@ void feedbackHandler(const actionlib_msgs::GoalStatusArray::ConstPtr &msg)
     //stop receiving msg from subscribed topic
     subscriber.shutdown();
 
+    //no more need of detect input
+    flag_goal_in_progress = 0;
+
+    system("clear");
+
+    std::cout << BOLD << "Robot automatic navigation \n\n"
+              << NC;
+
     if (status == 3) //status SUCCEDED
 
         std::cout
@@ -105,18 +216,7 @@ void feedbackHandler(const actionlib_msgs::GoalStatusArray::ConstPtr &msg)
             << RED << "The goal can not be reached.\n"
             << NC;
 
-    char answer;
-    do
-    {
-
-        std::cout << "\nWould you like to set another goal? (y/n)\n";
-        std::cin >> answer;
-
-    } while (answer != 'y' && answer != 'n' && answer != 'Y' && answer != 'N' && answer != '\x03');
-    if (answer == 'y' || answer == 'Y')
-        getCoordinates();
-    else
-        exit(1);
+    std::cout << "\nWould you like to set another goal? (y/n)\n";
 }
 
 int main(int argc, char **argv)
@@ -127,7 +227,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "reachPoint");
     ros::NodeHandle node_handle;
 
-    publisher = node_handle.advertise<move_base_msgs::MoveBaseActionGoal>("/move_base/goal", 1);
+    pub_goal = node_handle.advertise<move_base_msgs::MoveBaseActionGoal>("/move_base/goal", 1);
+    pub_cancel = node_handle.advertise<actionlib_msgs::GoalID>("/move_base/cancel", 1);
 
     getCoordinates();
 

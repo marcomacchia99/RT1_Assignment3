@@ -19,7 +19,7 @@ double turn_speed = 1;
 //define variable for Twist
 geometry_msgs::Twist vel;
 
-// For non-blocking keyboard inputs, taken from teleop_twist_keyboard_cpp
+// For non-blocking keyboard inputs, taken from teleop_twist_keyboard.cpp
 // at https://github.com/methylDragon/teleop_twist_keyboard_cpp/blob/master/src/teleop_twist_keyboard.cpp
 int getch(void)
 {
@@ -189,9 +189,7 @@ int main(int argc, char **argv)
     publisher = node_handle.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
 
     while (true)
-    {
         getCommand();
-    }
 
 
     return 0;
