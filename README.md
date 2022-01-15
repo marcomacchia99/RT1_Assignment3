@@ -55,7 +55,9 @@ Gazebo is an open-source 3D robot simulator. Here's the simulation view from Gaz
 
 ROS generate the environment based on the file `house.world`, stored into the __world__ folder.
 
-Initially the robot knows only what he can see, here's the image showing his
+Initially the robot knows only what he can see, here's the image showing his initial known map.
+
+![alt text](https://github.com/marcomacchia99/RT1_Assignment2/blob/main/world/tracciato.png)
 
 After some time the robot has explored and mapped all the surrounding walls using his laser scan.
 
