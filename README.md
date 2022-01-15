@@ -6,7 +6,7 @@ Assignment 3 (final assignment) - Research Track 1
 Introduction
 ------------
 
-The final assignment deals with a robot moving into an initlially unknown enviroment. Depending on the mode selected, the robot can `drive autonomously, reaching a given goal`, `being driven by the user` and `being driven by the user, assisting them to avoid collisions`.
+The final assignment deals with a robot moving into an initlially __unknown__ enviroment. Depending on the mode selected, the robot can __drive autonomously, reaching a given goal__, __being driven by the user__ and __being driven by the user, assisting them to avoid collisions__.
 
 Installing and running
 ----------------------
@@ -29,7 +29,7 @@ $ sudo apt-get install ros-<your_ros_distro>-navigation
 ```console
 $ sudo apt install xterm
 ```
-After doing that, you are ready to launch the simulation!
+After doing that, you are ready to __launch the simulation!__
 A launch file, called `launcher.launch`, is provided to run all the required nodes.
 
 this is its structure:
@@ -47,11 +47,19 @@ Notice that `launch-prefix` of mainController node contains some rules regarding
 Simulation environment
 ---------
 
-Here's the Monza track used in this game:
+After launching the simulation using the provided commands two programs will open, [__Gazebo__](http://gazebosim.org/) and [__Rviz__](http://wiki.ros.org/rviz).
+
+Gazebo is an open-source 3D robot simulator. Here's the simulation view from Gazebo:
 
 ![alt text](https://github.com/marcomacchia99/RT1_Assignment2/blob/main/world/tracciato.png)
 
-ROS generate the track arena based on this image, using the file `.world` contined inside the `world` folder. 
+ROS generate the environment based on the file `house.world`, stored into the __world__ folder.
+
+Initially the robot knows only what he can see, here's the image showing his
+
+After some time the robot has explored and mapped all the surrounding walls using his laser scan.
+
+We can now see the full map into rviz.
 
 Controller node
 --------------
