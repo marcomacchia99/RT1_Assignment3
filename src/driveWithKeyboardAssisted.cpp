@@ -204,6 +204,8 @@ void interpretInput(char inputChar)
         turn_speed = 1;
         break;
     case '\x03': //CTRL-C
+
+        //stop robot and exit
         vel.angular.z = 0;
         vel.linear.x = 0;
         publisher.publish(vel);
@@ -212,6 +214,7 @@ void interpretInput(char inputChar)
         exit(0);
         break;
     default:
+        //stop robot
         lin = 0;
         ang = 0;
         break;
@@ -267,7 +270,7 @@ int main(int argc, char **argv)
     //subribes to /scan topic
     ros::Subscriber subscriber = node_handle.subscribe("/scan", 500, checkWalls);
 
-    //this service will publish updated into /cmd_vel topic
+    //this ndoe will publish updated into /cmd_vel topic
     publisher = node_handle.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
 
     ros::AsyncSpinner spinner(4);

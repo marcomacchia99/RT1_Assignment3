@@ -30,6 +30,7 @@ int flag_goal_in_progress;
 //ariable for goal
 move_base_msgs::MoveBaseActionGoal goal;
 
+//function prototypes
 void getCoordinates();
 void feedbackHandler(const actionlib_msgs::GoalStatusArray::ConstPtr &msg);
 void detectInput();
@@ -73,11 +74,14 @@ void cancelGoal(int must_continue)
 
     subscriber.shutdown();
 
-    flag_goal_in_progress =0;
+    //set flag as goal in no more in progress
+    flag_goal_in_progress = 0;
 
+    //if the program should stop then return
     if (!must_continue)
         return;
 
+    //else clear and ask user what he wants to do
     system("clear");
 
     std::cout << BOLD << "Robot automatic navigation \n\n"
@@ -85,7 +89,9 @@ void cancelGoal(int must_continue)
     std::cout << RED << "Goal is cancelled. \n\n"
               << NC;
 
-    std::cout << "\nWould you like to set another goal? (y/n)\n";
+    std::cout << "Would you like to set another goal? (y/n)\n";
+
+    //detect user input
     while (true)
         detectInput();
 }
@@ -94,17 +100,20 @@ void detectInput()
 {
     //catch an user input
     char input_char = getch();
-    if (input_char == 'q' || input_char == 'Q')
+
+    //if there is a goal in progress then user is allowed to cancel goal
+    if ((input_char == 'q' || input_char == 'Q') && flag_goal_in_progress)
     {
         cancelGoal(1);
     }
-    else if (input_char == '\x03') //CTRL-C
+    else if (input_char == '\x03' && flag_goal_in_progress) //CTRL-C
     {
         cancelGoal(0);
         system("clear");
         ros::shutdown();
         exit(0);
     }
+    //if there aren't goal in progress then user is allowed to choose wheter to continue or not
     else if ((input_char == 'y' || input_char == 'Y' || input_char == 'n' || input_char == 'N') && !flag_goal_in_progress)
     {
         if (input_char == 'y' || input_char == 'Y')
@@ -149,6 +158,8 @@ void getCoordinates()
         std::cout << "Insert " << BOLD << "y" << NC << " coordinate: ";
         std::cin >> y;
     }
+
+    //build goal message, generating random id
     id = rand();
     goal.goal.target_pose.pose.position.x = x;
     goal.goal.target_pose.pose.position.y = y;
@@ -156,10 +167,13 @@ void getCoordinates()
     goal.goal.target_pose.header.frame_id = "map";
     goal.goal_id.id = std::to_string(id);
 
+    //publish goal message
     pub_goal.publish(goal);
 
+    //set flag as a new goal is in progress
     flag_goal_in_progress = 1;
 
+    //update ui
     system("clear");
 
     std::cout << BOLD << "Robot automatic navigation \n"
@@ -169,9 +183,11 @@ void getCoordinates()
 
     std::cout << "Press q to cancel the goal, or press CTRL-C to quit\n\n";
 
+    //subscribe to goal status
     ros::NodeHandle node_handle;
     subscriber = node_handle.subscribe("/move_base/status", 500, feedbackHandler);
 
+    //start detecting inputs
     ros::AsyncSpinner spinner(4);
 
     spinner.start();
@@ -201,6 +217,7 @@ void feedbackHandler(const actionlib_msgs::GoalStatusArray::ConstPtr &msg)
     //no more need of detect input
     flag_goal_in_progress = 0;
 
+    //update UI
     system("clear");
 
     std::cout << BOLD << "Robot automatic navigation \n\n"
@@ -227,9 +244,11 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "reachPoint");
     ros::NodeHandle node_handle;
 
+    //this node will send messages to goal and cancel(goal)
     pub_goal = node_handle.advertise<move_base_msgs::MoveBaseActionGoal>("/move_base/goal", 1);
     pub_cancel = node_handle.advertise<actionlib_msgs::GoalID>("/move_base/cancel", 1);
 
+    //get goal coordinates
     getCoordinates();
 
     ros::spin();
