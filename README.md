@@ -63,7 +63,9 @@ After some time the robot has explored and mapped all the surrounding walls usin
 
 We can now see the full map into rviz.
 
-Controller node
+![alt text](https://github.com/marcomacchia99/RT1_Assignment2/blob/main/world/tracciato.png)
+
+MainController node
 --------------
 
 The controller node is capable of driving potentially indefinitely all around the track, automatically detecting straights and turns. When the robot is approaching a turn, the node automatically tells him to slow down, so that he can make the right controls.
