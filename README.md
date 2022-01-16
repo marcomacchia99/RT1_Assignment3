@@ -51,19 +51,19 @@ After launching the simulation using the provided commands two programs will ope
 
 Gazebo is an open-source 3D robot simulator. Here's the simulation view from Gazebo:
 
-![alt text](https://github.com/marcomacchia99/RT1_Assignment2/blob/main/world/tracciato.png)
+![alt text](https://github.com/marcomacchia99/RT1_Assignment3/blob/noetic/assets/gazebo1.jpg)
 
 ROS generate the environment based on the file `house.world`, stored into the __world__ folder.
 
 Initially the robot knows only what he can see, here's the image showing his initial known map.
 
-![alt text](https://github.com/marcomacchia99/RT1_Assignment2/blob/main/world/tracciato.png)
+![alt text](https://github.com/marcomacchia99/RT1_Assignment3/blob/noetic/assets/rviz1.png)
 
 After some time the robot has explored and mapped all the surrounding walls using his laser scan.
 
 We can now see the full map into rviz.
 
-![alt text](https://github.com/marcomacchia99/RT1_Assignment2/blob/main/world/tracciato.png)
+![alt text](https://github.com/marcomacchia99/RT1_Assignment3/blob/noetic/assets/rviz2.png)
 
 MainController node
 --------------
