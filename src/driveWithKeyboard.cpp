@@ -10,7 +10,8 @@
 ros::Publisher publisher;
 
 //define variables for vel direction
-int lin, ang = 0;
+int lin=0; //linear direction
+int ang =0; //angular direction
 
 //define variables for vel speed
 double speed = 0.5;

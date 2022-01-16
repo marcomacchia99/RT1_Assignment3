@@ -27,7 +27,7 @@ int id;
 //flag used to detect the user input during goal navigation
 int flag_goal_in_progress;
 
-//ariable for goal
+//variable for goal
 move_base_msgs::MoveBaseActionGoal goal;
 
 //function prototypes

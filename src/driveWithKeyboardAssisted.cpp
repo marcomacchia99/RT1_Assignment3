@@ -12,8 +12,9 @@
 
 ros::Publisher publisher;
 
-//variables for vel direction
-int lin, ang = 0;
+//define variables for vel direction
+int lin=0; //linear direction
+int ang =0; //angular direction
 
 //variables for vel speed
 double speed = 0.5;
@@ -256,7 +257,7 @@ press CTRL-C to quit
     interpretInput(input_char);
 
     //publish new speed
-    publishVel();
+    // publishVel();
 
     system("clear");
 }
