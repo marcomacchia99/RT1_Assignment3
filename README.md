@@ -184,7 +184,7 @@ Finally, a __red danger warning string__ is prompted to the user.
 Flowchart
 --------
 
-<image src="https://github.com/marcomacchia99/RT1_Assignment2/blob/main/assets/diagram.png" width="600px">
+<image src="https://github.com/marcomacchia99/RT1_Assignment3/blob/noetic/assets/diagram.png">
 
     
 Project graph
