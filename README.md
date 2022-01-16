@@ -61,14 +61,39 @@ Initially the robot knows only what he can see, here's the image showing his ini
 
 After some time the robot has explored and mapped all the surrounding walls using his laser scan.
 
-We can now see the full map into rviz.
+We can now see the full map into rviz, as shown below:
 
 ![alt text](https://github.com/marcomacchia99/RT1_Assignment3/blob/noetic/assets/rviz2.png)
 
 MainController node
 --------------
 
-The controller node is capable of driving potentially indefinitely all around the track, automatically detecting straights and turns. When the robot is approaching a turn, the node automatically tells him to slow down, so that he can make the right controls.
+The mainController node is the first node, spawned with the `launcher.launch` file. This node simply prompts some instruction in the xterm console, then it detects and interprets the user inputs.
+
+The user can:
+* __1__ - Reach autonomousely a given position
+* __2__ - Drive the robot with the keyboard
+* __3__ - Drive the robot with the keyboard with automatic collision avoidance
+* __4__ - Reset simulation
+* __0__ - Exit from the program
+
+Generally speaking, this simulation includes a non-blocking getchar function, ideal to speed up the program execution and to improve the user execution.
+
+I found this function in [teleop_twist_keyboard_cpp repository](https://github.com/methylDragon/teleop_twist_keyboard_cpp/blob/master/src/teleop_twist_keyboard.cpp), and it temporarily edits the system settings in order to catch immediately what the user writes.
+
+Remember that the `termios.h` library is required, so don't remove it!
+
+Finally, based on the input received, the mainController node runs the selected node, using `system()` function.
+
+For example, if the number 1 is pressed, this command is executed:
+
+```c
+system("rosrun RT1_Assignment3 reachPoint");
+```
+
+ReachPoint node
+--------------
+capable of driving potentially indefinitely all around the track, automatically detecting straights and turns. When the robot is approaching a turn, the node automatically tells him to slow down, so that he can make the right controls.
 
 The controller uses all the sensors data received by the `/base_scan` publisher after he subscribes to it. this topic is composed by 720 _ranges_, in which there are all the detected distances. the sensor can see from -90 to 90 degrees, so each sensor has 1/4 of degree of view.
 
