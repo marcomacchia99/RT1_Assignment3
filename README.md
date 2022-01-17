@@ -77,7 +77,7 @@ The user can:
 * __4__ - Reset simulation
 * __0__ - Exit from the program
 
-Generally speaking, this simulation includes a non-blocking getchar function, ideal to speed up the program execution and to improve the user execution.
+Generally speaking, this simulation includes a __non-blocking getchar function__, ideal to speed up the program execution and to improve the user experience.
 
 I found this function in [teleop_twist_keyboard_cpp repository](https://github.com/methylDragon/teleop_twist_keyboard_cpp/blob/master/src/teleop_twist_keyboard.cpp), and it temporarily edits the system settings in order to catch immediately what the user writes.
 
@@ -93,7 +93,7 @@ system("rosrun RT1_Assignment3 reachPoint");
 
 ReachPoint node
 --------------
-The reachPoint node implements the first required feature. In fact it set a new goal for the robot according to what the user wants.
+The reachPoint node implements the first required feature. In fact it sets a new goal for the robot according to what the user wants.
 
 At his initial state, the node request the x and y coordinates of the goal, then it generates a new message of type `move_base_msgs/MoveBaseActionGoal`.
 The message is then published into the `/move_base/goal` topic. 
@@ -109,9 +109,9 @@ In particular, every goal is tracked by the node with its __id__, randomly gener
 
 In order to know if the robot has reached the goal or if the robot can't reach it a `/move_base/status` message handler is implemented. It continousely checks the messages published into that topic, in particular it looks for the __status__ code.
 
-Initially the status code is __1__, meaning that the robot is following his path. When the robot stop there are two possibilities: if the code is equal __3 (succeded)__ then it means that the goal has been successfully reached, otherwise if the robot can't reach the goal the status code will be set to __4 (aborted)__.
+Initially the status code is __1__, meaning that the robot is following his path. When the robot stop there are two possibilities: if the code equals __3 (succeded)__ then it means that the goal has been successfully reached, otherwise if the robot can't reach the goal the status code will be set to __4 (aborted)__.
 
-Based on the code the node displays the result in the console, then it asks if the user wants to select a new goal or exit from this node.
+Based on the status code the node displays the result in the console, then it asks if the user wants to select a new goal or exit from this node.
 
 
 DriveWithKeyboard node
@@ -120,7 +120,7 @@ The driveWithKeyboard node let the user drive the robot using the keyboard.
 
 Here, I decided to __edit the teleop_twist_keyboard__ node, starting from the `.cpp` version which I found in the [teleop_twist_keyboard_cpp repository](https://github.com/methylDragon/teleop_twist_keyboard_cpp/blob/master/src/teleop_twist_keyboard.cpp).
 
-In particular I clean the user interface, and I added the possibility to reset the linear and the angular speed. Also there's a new possibility to safely quit from the execution using CTRL-C combination.
+In particular I cleaned the user interface, and I added the possibility to reset the linear and the angular speed. Also there's a new possibility to safely quit from the execution using the well-known CTRL-C combination.
 
 The node simply checks the user imputs according to the instructions prompted in the console, and it publish the new speed to the `/cmd_vel` topic.
 
@@ -137,7 +137,7 @@ int ang =0; //angular direction
 vel.angular.z = turn_speed * ang;
 vel.linear.x = speed * lin;
 ```
-The user can use a 3x3 input keys as they are a "joystick". Here's the keys:
+The user can use a 3x3 input keys as a _joystick_. Here's the keys:
 <center>
 
 || Turn left | Don't turn | Turn right|
@@ -148,7 +148,7 @@ The user can use a 3x3 input keys as they are a "joystick". Here's the keys:
     
 </center>
 
-Also, the user can set the robot linear and angular joystick, using this set of commands:
+Also, the user can set the robot linear and angular speed, using this set of commands:
 
 <center>
     
@@ -170,11 +170,11 @@ In particular, the node reads the same identical user inputs as the driveWithKey
 To do so, the node subscribes to the `/scan` topic, and it uses the message received to detect walls too close to the robot. This topic is composed by 720 _ranges_, in which there are all the detected distances. the sensor can see from -90 to 90 degrees, so each sensor has 1/4 of degree of view.
 
 After a message from `/scan` is recieved, the node enters inside the `checkWalls` function, that filters all the ranges taking only the one from:
-* -90° to -55° referred to the walls on the right, 
-* -17.5° to 17.5° referred to the walls in front of the robot,
-* 55° to 90° referred to the walls on the left.
+* __-90° to -55°__ referred to the walls on the right, 
+* __-17.5° to 17.5°__ referred to the walls in front of the robot,
+* __55° to 90°__ referred to the walls on the left.
 
-The function then checks the minimum distance inside this ranges, and if a wall is closer than `wall_th = 1 (meter)` it prevents the robot from getting too close to it. In particulat, if the front wall is too close the robot can't advance, while if one of the walls on the left or on the right is too close the robot can't turn in that direction.
+The function then checks the minimum distance inside this ranges, and if a wall is closer than `wall_th = 1 (meter)` it prevents the robot from getting too close to it. In particular, if the front wall is too close the robot can't advance, while if one of the walls on the left or on the right is too close the robot can't turn in that direction.
 
 To actuate this security feature the functions simply edits the linear and angualar direction according to the rules above, setting them to __0__ when required.
 
@@ -184,26 +184,32 @@ Finally, a __red danger warning string__ is prompted to the user.
 Flowchart
 --------
 
-<image src="https://github.com/marcomacchia99/RT1_Assignment3/blob/noetic/assets/diagram.png">
+![alt text](https://github.com/marcomacchia99/RT1_Assignment3/blob/noetic/assets/diagram.png)
 
     
 Project graph
 --------
  
-Here's the project graph which explains the relationship within the nodes.
+Here's the project graph which explains the relationship within the nodes. Keep in mind that this is a graph generated while forcing the execution of all the three nodes at the same time, just to get a complete graph. During the normal execution this doesn't happen.
+    
+    
 The graph can be generated using this command:
  
 ```console
 $ rqt_graph
 ``` 
 
-![alt text](https://github.com/marcomacchia99/RT1_Assignment2/blob/main/assets/graph.png)
+![alt text](https://github.com/marcomacchia99/RT1_Assignment3/blob/noetic/assets/graph.png)
 
  
 Conclusion and future improvements
 -------------------
     
-By now the robot can autonomousely drive inside the [Autodromo Nazionale di Monza](https://www.monzanet.it/), but all the movement aren't smooth at all.
-A next update could introduce better movements inside the turn, expecially inside the _Prima variante_, and a bettere _user experience_.
+I'm happy with the result I obtain, also because the project is a bit challenging.
+    
+Unfortunately I can only test the simulation on Rviz and not on Gazebo, because VirtualBox didn't actually like running Gazebo flawlessly, so the VM can only render the 3D simulation at 2 or 3 FPS.
+    
+Regarding the future improvements:
+* The simulation uses the feedback provived by `base_scan/status` to check if the robot has reached the goal. Hower this topic takes quite a lot of time to detect that the robot is arrived, so the user received the response after some seconds. A possible improvement may fix this, checking the robot actual position and compute if he has reached the goal, so that it can be prompted instantly.
 
-It could also be possibile to dynamically change the robot speed, as the real cars actually do: The robot can drive at a speed that is inversely proportional to the amount of remaining straight. In this case however, the user input will became useless.
+* In the first navigation mode every goal's x and y coordinates are accepted, and then, _a posteriori_, the simulation check if the robot is actually capable of reaching that position. A control function can be implemented, comparing the goal's coordinates with a given set of acceptable coordinates that are inside the map.
